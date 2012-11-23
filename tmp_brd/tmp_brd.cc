@@ -19,8 +19,14 @@ void loop() {
 	// wait half a second
 	delay(500);
 	sensorValue = analogRead(powerInput);
-	Serial.print("PV = ");
-	Serial.println(sensorValue);
+
+	if (sensorValue < 600) { 
+		Serial.print("PV = ");
+		Serial.println(sensorValue);
+		Serial.println("POWER FAILED");
+	}
+
+
 	ledState = !ledState;
 	digitalWrite(StatusLed, ledState);
 	
