@@ -45,20 +45,25 @@ $(ARDUINO)/main.cpp \
 $(ARDUINO)/WMath.cpp \
 $(ARDUINO)/Print.cpp \
 $(ARDUINO)/HardwareSerial.cpp \
+$(ARDUINO)/IPAddress.cpp \
+$(ARDUINO)/new.cpp \
+$(ARDUINO)/CDC.cpp \
+$(ARDUINO)/HID.cpp \
+$(ARDUINO)/Stream.cpp \
+$(ARDUINO)/USBCore.cpp \
+$(ARDUINO)/WString.cpp \
 $(INSTALL_DIR)/libraries/EEPROM/EEPROM.cpp \
 $(INSTALL_DIR)/libraries/Ethernet/EthernetClient.cpp \
 $(INSTALL_DIR)/libraries/Ethernet/Ethernet.cpp \
 $(INSTALL_DIR)/libraries/Ethernet/EthernetServer.cpp \
 $(INSTALL_DIR)/libraries/Firmata/Firmata.cpp \
-$(INSTALL_DIR)/libraries/LiquidCrystal/LiquidCrystal.cpp \
 $(INSTALL_DIR)/libraries/Servo/Servo.cpp \
 $(INSTALL_DIR)/libraries/SoftwareSerial/SoftwareSerial.cpp \
 $(INSTALL_DIR)/libraries/Stepper/Stepper.cpp \
 $(INSTALL_DIR)/libraries/Wire/Wire.cpp  \
-$(INSTALL_DIR)/libraries/WiFi/WiFi.cpp  \
 $(INSTALL_DIR)/libraries/SPI/SPI.cpp  \
-$(INSTALL_DIR)/libraries/WiFi/WiFiClient.cpp  \
-$(INSTALL_DIR)/libraries/WiFi/WiFiServer.cpp  \
+$(INSTALL_DIR)/libraries/WiFlyHQ/WiFlyHQ.cpp  \
+#$(INSTALL_DIR)/libraries/LiquidCrystal/LiquidCrystal.cpp \
 # end of CXX_MODULES
 
 CXX_APP = applet/$(TARGET).cpp
@@ -96,8 +101,7 @@ ARDUINO_LIB_INCLUDES = \
 -I$(INSTALL_DIR)/libraries/SoftwareSerial \
 -I$(INSTALL_DIR)/libraries/Wire \
 -I$(INSTALL_DIR)/libraries/Wire/utility \
--I$(INSTALL_DIR)/libraries/WiFi \
--I$(INSTALL_DIR)/libraries/WiFi/utility \
+-I$(INSTALL_DIR)/libraries/WiFlyHQ \
 
 # Place -I options here
 CINCS = -I$(CURDIR) -I$(ARDUINO) $(ARDUINO_LIB_INCLUDES) -I$(AVR_HEADERS)
