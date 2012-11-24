@@ -4,7 +4,7 @@
  * This program simply configures the network stack and joins network
  *
  * http://jeelabs.net/projects/hardware/wiki/JeeNode
- *
+ * Note: This version assumes wifi controller setup is completed before initializing software.
  */
 
 #include <WiFlyHQ.h> // Wireless Library for RN-XV Radio (For hardware see Sparkfun.com)
