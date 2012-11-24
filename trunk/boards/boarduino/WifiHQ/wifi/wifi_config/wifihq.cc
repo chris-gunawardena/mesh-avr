@@ -94,9 +94,13 @@ void setup() {
 	if (wifly.ping("google.com")) {
 		Serial.println( " Ok " );	
 	} else {
-	
 		Serial.println(" Failed to ping Google");
-
+	}
+	Serial.print("ping network host... ");
+	if (wifly.ping("10.42.8.35")) {
+		Serial.println( " Ok " );	
+	} else {
+		Serial.println(" Failed to ping network host");
 	}
 	
     /* Setup for UDP packets, sent automatically */
@@ -116,7 +120,7 @@ void setup() {
     Serial.print("DeviceID: ");
     Serial.println(wifly.getDeviceID(buf, sizeof(buf)));
 
-    wifly.setHost("192.168.1.60", 8042);	// Send UPD packets to this server and port
+    wifly.setHost("10.42.8.35", 8042);	// Send UPD packets to this server and port
 
     Serial.println("WiFly ready");
 }
