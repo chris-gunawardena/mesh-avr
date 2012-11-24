@@ -4,19 +4,19 @@
 TARGET = $(notdir $(CURDIR))
 #INSTALL_DIR = /swpkg/avr/arduino-1.0.1
 INSTALL_DIR = /swpkg/avr/arduino-1.0.2
-PORT = /dev/ttyBlue
+PORT = /dev/ttyRed
 # used for older boards may be depricated...
 #AVRDUDE_PROGRAMMER = stk500v1
 # used with newer boards
 AVRDUDE_PROGRAMMER = arduino
 #AVRDUDE_PROGRAMMER = stk500v1
 #MCU = atmega168
-MCU = atmega168
-#MCU = atmega328p
-#F_CPU = 16000000L
-F_CPU = 16000000
-UPLOAD_RATE = 19200
-#UPLOAD_RATE = 115200
+#MCU = atmega168
+MCU = atmega328p
+F_CPU = 16000000L
+#F_CPU = 16000000
+#UPLOAD_RATE = 19200
+UPLOAD_RATE = 115200
 
 
 ############################################################################
@@ -63,6 +63,8 @@ $(INSTALL_DIR)/libraries/Stepper/Stepper.cpp \
 $(INSTALL_DIR)/libraries/Wire/Wire.cpp  \
 $(INSTALL_DIR)/libraries/SPI/SPI.cpp  \
 $(INSTALL_DIR)/libraries/WiFlyHQ/WiFlyHQ.cpp  \
+$(INSTALL_DIR)/libraries/JeeLib/Ports.cpp  \
+$(INSTALL_DIR)/libraries/JeeLib/RF12.cpp  \
 #$(INSTALL_DIR)/libraries/LiquidCrystal/LiquidCrystal.cpp \
 # end of CXX_MODULES
 
@@ -102,6 +104,7 @@ ARDUINO_LIB_INCLUDES = \
 -I$(INSTALL_DIR)/libraries/Wire \
 -I$(INSTALL_DIR)/libraries/Wire/utility \
 -I$(INSTALL_DIR)/libraries/WiFlyHQ \
+-I$(INSTALL_DIR)/libraries/JeeLib \
 
 # Place -I options here
 CINCS = -I$(CURDIR) -I$(ARDUINO) $(ARDUINO_LIB_INCLUDES) -I$(AVR_HEADERS)

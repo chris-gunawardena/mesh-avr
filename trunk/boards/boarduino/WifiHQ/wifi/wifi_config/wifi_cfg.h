@@ -1,7 +1,7 @@
 
 
-#define SoftSerialWifi_TX 6
-#define SoftSerialWifi_RX 7
+#define SoftSerialWifi_TX 5
+#define SoftSerialWifi_RX 15
 
 
 

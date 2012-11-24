@@ -10,8 +10,8 @@ void loop();
  * This sketch is released to the public domain.
  *
  */
-#include <SoftwareSerial.h>
-SoftwareSerial wifiSerial(6,7);
+//#include <SoftwareSerial.h>
+//SoftwareSerial wifiSerial(6,7);
 
 //#include <AltSoftSerial.h>
 //AltSoftSerial wifiSerial(8,9);
@@ -36,13 +36,13 @@ void setup()
     Serial.print("Free memory: ");
     Serial.println(wifly.getFreeMemory(),DEC);
 
+/*
     wifiSerial.begin(9600);
-
     if (!wifly.begin(&wifiSerial)) {
         Serial.println("Failed to start wifly");
 	terminal();
     }
-
+*/
     if (wifly.getFlushTimeout() != 10) {
         Serial.println("Restoring flush timeout to 10msecs");
         wifly.setFlushTimeout(10);
