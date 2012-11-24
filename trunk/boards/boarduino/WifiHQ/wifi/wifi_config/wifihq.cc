@@ -29,7 +29,7 @@ void setup() {
 	delay(2000); // wait for the wifi controller to start before initializing.
 
 
-	wifiSerial.begin(9600); // open software serial port to WiFly controller
+	wifiSerial.begin(19200); // open software serial port to WiFly controller
 	
 	if (!wifly.begin(&wifiSerial, &Serial)) {
 		// Check to see if the libraries are loaded...
