@@ -7,33 +7,26 @@
  *
  */
 
-#include "Arduino.h"
 #include <WiFlyHQ.h> // Wireless Library for RN-XV Radio (For hardware see Sparkfun.com)
 #include <SoftwareSerial.h>
 #include <wifi_cfg.h>
 
 // Define Software emulated serial 
-SoftwareSerial wifiSerial(SoftSerialWifi_RX, SoftSerialWifi_TX); // RX, TX
+SoftwareSerial wifiSerial(5,4);
 // Initialize WiFly Software (Create instance...)
 WiFly wifly;
 
 void terminal();
 
-const char mySSID[] = "wifly0912_emb1";
-const char myPassword[] = "wifly_1973";
-
-
 void setup() {
 	char buf[32]; // 32 byte buffer
-	Serial.begin(115200); // serial to linux
+	Serial.begin(57600); // serial to linux
 	Serial.println("Begin WiFi Config ");
 
 	delay(2000); // wait for the wifi controller to start before initializing.
 	
 	Serial.println("Waiting for controller to settle..."); // Print WiFly Device free memory as decimal value.
-	delay(8000); // wait for the wifi controller to start before initializing.
-	Serial.print("WiFly Free Memory  = ");
-	Serial.println(wifly.getFreeMemory(), DEC); // Print WiFly Device free memory as decimal value.
+	delay(2000); // wait for the wifi controller to start before initializing.
 
 
 	wifiSerial.begin(9600); // open software serial port to WiFly controller
@@ -58,17 +51,17 @@ void setup() {
 	if (!wifly.isAssociated() ) {
 		// configure wifly for network 
 		Serial.println("Joining Network... Please wait");
-		wifly.setSSID(mySSID);
-		wifly.setPassphrase(myPassword);
-		wifly.enableDHCP(); // Note: Setup DDNS for wifly contolller... 
+		//wifly.setSSID(mySSID);
+		//wifly.setPassphrase(myPassword);
+		//wifly.enableDHCP(); // Note: Setup DDNS for wifly contolller... 
 
 		// Check to see if the join worked.
-		if (!wifly.join()) {
-			Serial.println("Joined wifi network!!! ");
-		} else {
-			Serial.println("Failed to join wifi network :( ");
-			terminal();
-		}
+		//if (!wifly.join()) {
+		//	Serial.println("Joined wifi network!!! ");
+		//} else {
+		//	Serial.println("Failed to join wifi network :( ");
+		//	terminal();
+		//}
 
 	} else {
 		Serial.println("Aleady Joined Network..." );
