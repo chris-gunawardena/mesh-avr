@@ -3,7 +3,7 @@
  * 
  * This program simply configures the network stack and joins network
  *
- *
+ * http://jeelabs.net/projects/hardware/wiki/JeeNode
  *
  */
 
@@ -24,18 +24,23 @@ const char myPassword[] = "wifly_1973";
 
 
 void setup() {
-
 	char buf[32]; // 32 byte buffer
 	Serial.begin(115200); // serial to linux
 	Serial.println("Begin WiFi Config ");
+
+	delay(2000); // wait for the wifi controller to start before initializing.
+	
+	Serial.println("Waiting for controller to settle..."); // Print WiFly Device free memory as decimal value.
+	delay(8000); // wait for the wifi controller to start before initializing.
 	Serial.print("WiFly Free Memory  = ");
 	Serial.println(wifly.getFreeMemory(), DEC); // Print WiFly Device free memory as decimal value.
+
 
 	wifiSerial.begin(9600); // open software serial port to WiFly controller
 	
 	if (!wifly.begin(&wifiSerial, &Serial)) {
 		// Check to see if the libraries are loaded...
-		Serial.println("Failed to start wifly controller\n Please check configuration and try again...");
+		Serial.println("Failed to start wifly controller\n\rPlease check configuration and try again...");
 		terminal();
 	}
 
