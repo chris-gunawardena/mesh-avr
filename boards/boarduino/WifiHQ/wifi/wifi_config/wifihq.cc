@@ -5,6 +5,11 @@
  *
  * http://jeelabs.net/projects/hardware/wiki/JeeNode
  * Note: This version assumes wifi controller setup is completed before initializing software.
+ * 
+ * Testing Notes:
+ * 1.) max stable SoftwareSerial baud rate (Wifly) = 19200. 38400 baud rate and higher fail to initialize the controller  
+ * 2.) Hardware modification required if using the Sparkfun Xbee Explore board (remove and jumper board diode for DIN)
+ * 3.) Sparkfun USB XBee explore board (unmodified) works well for configuring network parameters. You can leave ssid & passphrase out of code :). 
  */
 
 #include <WiFlyHQ.h> // Wireless Library for RN-XV Radio (For hardware see Sparkfun.com)
