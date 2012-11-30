@@ -3,7 +3,8 @@
 
 TARGET = $(notdir $(CURDIR))
 #INSTALL_DIR = /swpkg/avr/arduino-1.0.1
-INSTALL_DIR = /swpkg/avr/arduino-1.0.2
+#INSTALL_DIR = /swpkg/avr/arduino-1.0.1
+INSTALL_DIR = /swpkg/avr/arduino-1.0.1
 PORT = /dev/ttyAvr
 # used for older boards may be depricated...
 #AVRDUDE_PROGRAMMER = stk500v1
@@ -23,7 +24,8 @@ UPLOAD_RATE = 38400 # Required for Sanguino Upload
 # Below here nothing should be changed...
 
 VERSION=100
-ARDUINO = $(INSTALL_DIR)/hardware/arduino/cores/arduino
+#ARDUINO = $(INSTALL_DIR)/hardware/arduino/cores/arduino
+ARDUINO = $(INSTALL_DIR)/hardware/sanguino/cores/arduino
 #AVR_TOOLS_PATH = $(INSTALL_DIR)/hardware/tools/avr/bin
 AVR_TOOLS_PATH = /usr/bin
 # AVR_TOOLS_PATH = /usr/bin
