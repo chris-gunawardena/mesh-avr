@@ -25,10 +25,6 @@ int Pin_1 = 1;
 int Pin_2 = 2;
 int Pin_3 = 3;
 int Pin_4 = 4;
-int Pin_14 = 14;
-int Pin_20 = 20;
-int Pin_21 = 21;
-int Pin_17 = 17;
 
 
 void terminal();
@@ -41,22 +37,6 @@ void setup() {
 	pinMode(Pin_2, OUTPUT);
 	pinMode(Pin_3, OUTPUT);
 	pinMode(Pin_4, OUTPUT);
-	pinMode(Pin_14, OUTPUT);
-	pinMode(Pin_20, OUTPUT);
-	pinMode(Pin_21, OUTPUT);
-	pinMode(Pin_17, OUTPUT);
-	Serial.println("Powering On Pins 1-4");
-	digitalWrite(Pin_0, HIGH);
-	digitalWrite(Pin_1, HIGH);
-	digitalWrite(Pin_2, HIGH);
-	digitalWrite(Pin_3, HIGH);
-	digitalWrite(Pin_4, HIGH);
-	digitalWrite(Pin_14, HIGH);
-	digitalWrite(Pin_20, HIGH);
-	digitalWrite(Pin_21, HIGH);
-	digitalWrite(Pin_17, HIGH);
-
-/*
 	Serial.println("Begin WiFi Config ");
 
 	delay(200); // wait for the wifi controller to start before initializing.
@@ -155,7 +135,6 @@ void setup() {
 
     Serial.println("WiFly ready");
 
-*/
 }
 
 uint32_t lastSend = 0;
@@ -163,7 +142,6 @@ uint32_t count=0;
 
 void loop()
 {
-/*    
     digitalWrite(Pin_1, HIGH);
     Serial.println("1 On");
     delay(1500);
@@ -184,7 +162,7 @@ void loop()
     delay(1500);
     Serial.println("4 OFF");
     digitalWrite(Pin_4, LOW);
-
+    /*
     if ((millis() - lastSend) > 1000) {
         count++;
 	Serial.print("Sending message ");
