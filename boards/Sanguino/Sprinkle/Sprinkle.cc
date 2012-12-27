@@ -48,7 +48,7 @@ void setup() {
     // set all the zone pins to outputs...
     for ( int x =0; x < sizeof(zones); x++) {
 	    // Set Relay Pins to Outputs
-        pimMode(zones[x], OUTPUT);
+        pinMode(zones[x], OUTPUT);
     }	
 	// Serial coniguration for devices
 	Serial.begin(57600); // serial to linux
@@ -159,10 +159,10 @@ void loop()
 {
 
 
-    for (int x=0, x < sizeof(zones); x++) {
+    for (int x=0; x < sizeof(zones); x++) {
         // turn on each zone 
         // Wait 
-        digitalWtrite(zones[x], HIGH);
+        digitalWrite(zones[x], HIGH);
         // Wait
         delay(delay_time);
         digitalWrite(zones[x], LOW);
