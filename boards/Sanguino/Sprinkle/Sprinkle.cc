@@ -14,7 +14,18 @@
 
  */
 
+// Include PROGMEM library (Access Flash Memory instead of SRAM...)
+// reduce data copy from flash to SRAM with static content...
+#include <avr/pgmspace.h>
 #include <WiFlyHQ.h> // Wireless Library for RN-XV Radio (For hardware see Sparkfun.com)
+
+//Define a section of flash for program memory 
+#undef PROGMEM
+#define PROGMEM __attribute__(( section(".progmem.data") ))
+// Define routine for accessing PROGMEM strings...
+#undef PSTR
+#define PSTR(s) (__extension__({ static prog_char __c[] PROGMEM = (s); &__c[0];}))
+
 
 // Define Software emulated serial 
 //SoftwareSerial wifiSerial(14,13);
@@ -24,16 +35,9 @@ WiFly wifly;
 /*
 Map IO Port to Sprinkler Manifold Solnoids
 */
-int Relay_0 = 5;
-int Relay_1 = 1;
-int Relay_2 = 2;
-int Relay_3 = 3;
-int Relay_4 = 4;
-int Relay_5 = 20;
-int Relay_6 = 19;
-int Relay_7 = 18;
-int Relay_8 = 17;
-int Relay_9 = 16;
+
+// define 10 sprinkling zones. Zone map to be determined by wiring....
+int zones[] = {5,1,2,3,4,20,19,18,17,16};
 // Note Relays 0 & 15 not connected at this time.
 
 void terminal();
@@ -41,18 +45,11 @@ void terminal();
 void setup() {
 	char buf[32]; // 32 byte buffer
 
-	// Set Relay Pins to Outputs
-	pinMode(Relay_0, OUTPUT);
-	pinMode(Relay_1, OUTPUT);
-	pinMode(Relay_2, OUTPUT);
-	pinMode(Relay_3, OUTPUT);
-	pinMode(Relay_4, OUTPUT);
-	pinMode(Relay_5, OUTPUT);
-	pinMode(Relay_6, OUTPUT);
-	pinMode(Relay_7, OUTPUT);
-	pinMode(Relay_8, OUTPUT);
-	pinMode(Relay_9, OUTPUT);
-	
+    // set all the zone pins to outputs...
+    for ( int x =0; x < sizeof(zones); x++) {
+	    // Set Relay Pins to Outputs
+        pimMode(zones[x], OUTPUT);
+    }	
 	// Serial coniguration for devices
 	Serial.begin(57600); // serial to linux
 	Serial.println("Begin WiFi Config ");
@@ -162,48 +159,14 @@ void loop()
 {
 
 
-    digitalWrite(Relay_0, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_0, LOW);
-    
-    digitalWrite(Relay_1, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_1, LOW);
-    
-    digitalWrite(Relay_2, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_2, LOW);
-    
-    digitalWrite(Relay_3, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_3, LOW);
-    
-    digitalWrite(Relay_4, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_4, LOW);
-
-    digitalWrite(Relay_5, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_5, LOW);
-
-    digitalWrite(Relay_6, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_6, LOW);
-    
-    digitalWrite(Relay_7, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_7, LOW);
-    
-    digitalWrite(Relay_8, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_8, LOW);
-    
-    digitalWrite(Relay_9, HIGH);
-    delay(delay_time);
-    digitalWrite(Relay_9, LOW);
-
-
-    delay(delay_time);
+    for (int x=0, x < sizeof(zones); x++) {
+        // turn on each zone 
+        // Wait 
+        digitalWtrite(zones[x], HIGH);
+        // Wait
+        delay(delay_time);
+        digitalWrite(zones[x], LOW);
+    }
     delay(delay_time);
 
 
