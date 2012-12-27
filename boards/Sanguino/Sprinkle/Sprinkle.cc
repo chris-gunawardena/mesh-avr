@@ -11,7 +11,9 @@
  * 2.) Hardware modification required if using the Sparkfun Xbee Explore board (remove and jumper board diode for DIN)
  * 3.) Sparkfun USB XBee explore board (unmodified) works well for configuring network parameters. You can leave ssid & passphrase out of code :). 
  * 4.) *** Note *** Sanguino board operates at 5V (including serial voltage). Modify board to include voltage divider to reduce single strength to 3.3v
-
+ *  
+ * Weather Listings (REST)
+ * http://graphical.weather.gov/xml/rest.php
  */
 
 // Include PROGMEM library (Access Flash Memory instead of SRAM...)
@@ -38,10 +40,11 @@ Map IO Port to Sprinkler Manifold Solnoids
 
 // define 10 sprinkling zones. Zone map to be determined by wiring....
 int zones[] = {5,1,2,3,4,20,19,18,17,16};
+unsigned long time;
+
 // Note Relays 0 & 15 not connected at this time.
 
 void terminal();
-
 void setup() {
 	char buf[32]; // 32 byte buffer
 
@@ -52,7 +55,7 @@ void setup() {
     }	
 	// Serial coniguration for devices
 	Serial.begin(57600); // serial to linux
-	Serial.println("Begin WiFi Config ");
+	Serial.println("Begin WiFi Config "
 
 	delay(200); // wait for the wifi controller to start before initializing.
 	
@@ -82,18 +85,6 @@ void setup() {
 	if (!wifly.isAssociated() ) {
 		// configure wifly for network 
 		Serial.println("Joining Network... Please wait");
-		//wifly.setSSID(mySSID);
-		//wifly.setPassphrase(myPassword);
-		//wifly.enableDHCP(); // Note: Setup DDNS for wifly contolller... 
-
-		// Check to see if the join worked.
-		//if (!wifly.join()) {
-		//	Serial.println("Joined wifi network!!! ");
-		//} else {
-		//	Serial.println("Failed to join wifi network :( ");
-		//	terminal();
-		//}
-
 	} else {
 		Serial.println("Aleady Joined Network..." );
 	}
@@ -114,20 +105,6 @@ void setup() {
 	}
 
 
-	// Attempt to ping the outside world
-
-	Serial.print("ping google.com... ");
-	if (wifly.ping("google.com")) {
-		Serial.println( " Ok " );	
-	} else {
-		Serial.println(" Failed to ping Google");
-	}
-	Serial.print("ping network host... ");
-	if (wifly.ping("10.42.8.35")) {
-		Serial.println( " Ok " );	
-	} else {
-		Serial.println(" Failed to ping network host");
-	}
 	
     // Setup for UDP packets, sent automatically /
     wifly.setIpProtocol(WIFLY_PROTOCOL_UDP);
@@ -154,7 +131,7 @@ void setup() {
 
 uint32_t lastSend = 0;
 uint32_t count=0;
-int delay_time = 500;
+int delay_time = 20; // approximately 5 mintes
 void loop()
 {
 
@@ -172,29 +149,29 @@ void loop()
 
 
 
-    /*
-    if ((millis() - lastSend) > 1000) {
-        count++;
-	Serial.print("Sending message ");
-	Serial.println(count);
-
-	wifly.print("Hello, count=");
-	wifly.println(count);
-	lastSend = millis();
-    }
-
-    if (Serial.available()) {
-       //  if the user hits 't', switch to the terminal for debugging 
-        if (Serial.read() == 't') {
-	    terminal();
-	}
-    }
-   */
 
 }
 
 
+void testNetwork() {
+    // perform additional network connectivity tests.
 
+	// Attempt to ping the outside world
+
+	Serial.print("ping google.com... ");
+	if (wifly.ping("google.com")) {
+		Serial.println( " Ok " );	
+	} else {
+		Serial.println(" Failed to ping Google");
+	}
+	Serial.print("ping network host... ");
+	if (wifly.ping("10.42.8.35")) {
+		Serial.println( " Ok " );	
+	} else {
+		Serial.println(" Failed to ping network host");
+	}
+
+}
 
 
 
