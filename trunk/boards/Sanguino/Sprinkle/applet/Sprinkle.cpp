@@ -143,12 +143,12 @@ void setup() {
 
 uint32_t lastSend = 0;
 uint32_t count=0;
-bool runCycleEnabled = true;
-bool cycleStarted = false;
+bool runCycleEnabled = true; // used to toggle between run, stop, pause, and resume. Latter features are not complete, yet. 
+bool cycleStarted = false; // hold state of system. Note: system state could be maintained via single byte (bit map)
 int scan_time = 50; // set Scan time to 50 ms (scan_time * 20 = 1 second)
-int zoneRunTimeMax = 3000; // set to 2:30 minutes for testing 18000; // set max runtime per zone to 15 minutes
+int zoneRunTimeMax = 1200; // set to 1:00 minutes for testing 18000; // set max runtime per zone to 15 minutes
 int currentRunIteration = 0;
-int currentZone = NULL; // store current zone of cycle
+int currentZone = 0; // store current zone of cycle, initialize to 0
 int maxZone = 10; // account for 10 total zones 0-9
 void loop()
 {
@@ -159,8 +159,6 @@ void loop()
         // Run cycle is enabled
         // scan cycle is active
         if (!cycleStarted) {
-            
-            currentZone = 0;
             cycleStarted = true;
             // Detect the inital state of system, start zone program
             Serial.print("Current Zone = ");
@@ -168,7 +166,6 @@ void loop()
             // Enable Zone
             enableZone(zones[currentZone]);
         } else {
-            Serial.println("Got Here");
             if ( currentRunIteration >= zoneRunTimeMax ) {
                 // Reset Run Iteration
                 currentRunIteration = 0;
