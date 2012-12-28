@@ -39,12 +39,21 @@ Map IO Port to Sprinkler Manifold Solnoids
 */
 
 // define 10 sprinkling zones. Zone map to be determined by wiring....
-int zones[] = {5,1,2,3,4,20,19,18,17,16};
-unsigned long time;
-
 // Note Relays 0 & 15 not connected at this time.
-
+int zones[] = {5,1,2,3,4,20,19,18,17,16};
+unsigned long time; // added timer for testing runtimes...
+/*
+ * Function declaration
+ */
+void safeSystemStop();
+void enableZone(int Zone);
+void disableZone(int Zone);
+void print_P(); // Print static content from flash
+void println_P(); // print static content from flash (include newline)
 void terminal();
+/*
+ * BEGIN CODE
+ */
 void setup() {
 	char buf[32]; // 32 byte buffer
 
@@ -55,7 +64,7 @@ void setup() {
     }	
 	// Serial coniguration for devices
 	Serial.begin(57600); // serial to linux
-	Serial.println("Begin WiFi Config "
+	Serial.println("Begin WiFi Config ");
 
 	delay(200); // wait for the wifi controller to start before initializing.
 	
@@ -131,11 +140,59 @@ void setup() {
 
 uint32_t lastSend = 0;
 uint32_t count=0;
-int delay_time = 20; // approximately 5 mintes
+bool runCycleEnabled = true;
+bool cycleStarted = false;
+int scan_time = 50; // set Scan time to 50 ms (scan_time * 20 = 1 second)
+int zoneRunTimeMax = 3000; // set to 2:30 minutes for testing 18000; // set max runtime per zone to 15 minutes
+int currentRunIteration = 0;
+int currentZone = NULL; // store current zone of cycle
+int maxZone = 10; // account for 10 total zones 0-9
 void loop()
 {
 
+    delay(scan_time);
+    // test code 
+    if (runCycleEnabled) {
+        // Run cycle is enabled
+        // scan cycle is active
+        if (!cycleStarted) {
+            
+            currentZone = 0;
+            cycleStarted = true;
+            // Detect the inital state of system, start zone program
+            Serial.print("Current Zone = ");
+            Serial.println(currentZone);
+            // Enable Zone
+            enableZone(zones[currentZone]);
+        } else {
+            Serial.println("Got Here");
+            if ( currentRunIteration >= zoneRunTimeMax ) {
+                // Reset Run Iteration
+                currentRunIteration = 0;
+                // Cycle started
+                // continue running through sequence in cycle.
+                disableZone(zones[currentZone]);
+                // Increment Zone number 
+                currentZone ++;
+                // check to see if the cycle is complete...
+                if ( currentZone == maxZone) {
+                    // Cycle is complete.
+                    runCycleEnabled = false;
+                    cycleStarted = false;
+                } else {
+                    // enable next zone
+                    enableZone(zones[currentZone]);
+                }
+            } else {
+                currentRunIteration++;
+                Serial.print("Current Iteration = ");
+                Serial.println(currentRunIteration);
+            }
+        }
+    }
+    
 
+/*
     for (int x=0; x < sizeof(zones); x++) {
         // turn on each zone 
         // Wait 
@@ -145,12 +202,28 @@ void loop()
         digitalWrite(zones[x], LOW);
     }
     delay(delay_time);
-
-
-
-
-
+*/
 }
+
+void safeSystemStop() {
+    // Stop all zones
+    for (int x =0; x < sizeof(zones); x++ ){
+        disableZone(zones[x]);
+    }
+}
+
+void enableZone(int Zone) {
+    // turn on the zone
+    digitalWrite(Zone, HIGH);
+}
+
+void disableZone(int Zone) {
+    // turm off the zone
+    digitalWrite(Zone, LOW);
+}
+
+
+
 
 
 void testNetwork() {
