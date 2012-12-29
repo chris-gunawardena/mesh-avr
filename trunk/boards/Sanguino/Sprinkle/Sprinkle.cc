@@ -51,6 +51,8 @@ void disableZone(int Zone);
 void print_P(); // Print static content from flash
 void println_P(); // print static content from flash (include newline)
 void terminal();
+void getControllerInfo();
+void send_status();
 /*
  * BEGIN CODE
  */
@@ -66,7 +68,6 @@ void setup() {
 	Serial.begin(57600); // serial to linux
 	Serial.println("Begin WiFi Config ");
 
-	delay(200); // wait for the wifi controller to start before initializing.
 	
 	Serial.println("Waiting for controller to settle..."); // Print WiFly Device free memory as decimal value.
 	delay(200); // wait for the wifi controller to start before initializing.
@@ -113,20 +114,21 @@ void setup() {
 		Serial.println(" Failed to ping Gateway");
 	}
 
-
+    wifly.setBroadcastInterval(0); // disable UDP Broadcast 
+    wifly.setDeviceID("WiFly-Sprinkle");
 	
-    // Setup for UDP packets, sent automatically /
-    wifly.setIpProtocol(WIFLY_PROTOCOL_UDP);
-    wifly.setHost("192.168.1.60", 8042);	// Send UDP packet to this server and port
-
-    Serial.print("MAC: ");
-    Serial.println(wifly.getMAC(buf, sizeof(buf)));
-    Serial.print("IP: ");
-    Serial.println(wifly.getIP(buf, sizeof(buf)));
-    Serial.print("Netmask: ");
-    Serial.println(wifly.getNetmask(buf, sizeof(buf)));
-    Serial.print("Gateway: ");
-    Serial.println(wifly.getGateway(buf, sizeof(buf)));
+    wifly.setIpProtocol(WIFLY_PROTOCOL_TCP); // set TCP as Protocol
+    if (wifly.getPort() != 3482) {
+        // If the controller is not configured to use port
+        // 80, set the port config...
+        wifly.setPort(3482);
+        wifly.save();
+        Serial.println("WiFly configuration updated to use port 3482...\nRebooting Controller. Please Wait.");
+        wifly.reboot();
+        delay(3000); // delay while rebooting
+    }
+    
+    
 
     //wifly.setDeviceID("Wifly-UDP");
     //Serial.print("DeviceID: ");
@@ -140,17 +142,19 @@ void setup() {
 
 uint32_t lastSend = 0;
 uint32_t count=0;
-bool runCycleEnabled = true; // used to toggle between run, stop, pause, and resume. Latter features are not complete, yet. 
+bool runCycleEnabled = false; // used to toggle between run, stop, pause, and resume. Latter features are not complete, yet. 
+bool systemPaused = false;
 bool cycleStarted = false; // hold state of system. Note: system state could be maintained via single byte (bit map)
 int scan_time = 50; // set Scan time to 50 ms (scan_time * 20 = 1 second)
 int zoneRunTimeMax = 1200; // set to 1:00 minutes for testing 18000; // set max runtime per zone to 15 minutes
 int currentRunIteration = 0;
 int currentZone = 0; // store current zone of cycle, initialize to 0
 int maxZone = 10; // account for 10 total zones 0-9
-void loop()
-{
+char buf[80]; // create character buffer for network messages
+long TXi, TXf;
+void loop() {
 
-    delay(scan_time);
+    delay(scan_time); // delay run for short time < 100 ms
     // test code 
     if (runCycleEnabled) {
         // Run cycle is enabled
@@ -182,25 +186,92 @@ void loop()
                 }
             } else {
                 currentRunIteration++;
-                Serial.print("Current Iteration = ");
-                Serial.println(currentRunIteration);
+                if (currentRunIteration % 100  == 0 ) {
+                    // reduce printing...
+                    Serial.print("Current Iteration = ");
+                    Serial.println(currentRunIteration);
+                }
             }
         }
     }
-    
+    // Look to see if data was sent to the wifly controller...
+    if (wifly.available() > 0 ) {
+        // call wifly handler
+        //
+        TXi = millis(); 
+        Serial.println("WiFi Data Available");
+        
+        //if (wifly.gets(buf, sizeof(buf))){
+        wifly.gets(buf, sizeof(buf));
+        // Read from raw socket
+        Serial.print("Buffer has: ");
+        Serial.println(buf);
+        
 
-/*
-    for (int x=0; x < sizeof(zones); x++) {
-        // turn on each zone 
-        // Wait 
-        digitalWrite(zones[x], HIGH);
-        // Wait
-        delay(delay_time);
-        digitalWrite(zones[x], LOW);
+        if (strncmp_P(buf, PSTR("F:"),2) == 0 ) {
+            // Received a function command
+            Serial.println("Accepted function command ");
+            wifly.write("ACCEPT");
+            
+            if (strncmp_P(buf, PSTR("F:eCycle"),8) == 0 ) {
+                // [Enable] Start run cycle
+                // 1. Start cycle
+                if (! systemPaused ) {
+                    runCycleEnabled = true;
+                } else {
+                    wifly.write("E:SysPaused");
+                }
+
+                
+            } else if (strncmp_P(buf, PSTR("F:dCycle"),8) == 0 ) {
+                // [Disable] Stop run cycle
+                // 1. Disable all zones
+                // 2. Set run cycle to false
+                // 3. Reset run clock
+                // 4. Reset cycle counter (System will restart from zone 1 [index 0]) 
+                // 5. Reset paused flag
+                safeSystemStop();
+                runCycleEnabled = false;
+                cycleStarted = false;
+                currentRunIteration = 0;
+                systemPaused = false;
+            } else if (strncmp_P(buf, PSTR("F:pCycle"),8) == 0 ) {
+                // [Pause] Current cycle
+                // 1. Disable all zones
+                // 2. set the run cycle to false (prevent the cycle counter from incrementing)
+                // 3. set the system state to paused. 
+                runCycleEnabled = false;
+                safeSystemStop();
+                systemPaused = true;
+            } else if (strncmp_P(buf, PSTR("F:rCycle"),8) == 0 ) {
+                // [Resume] Current cycle
+                // 1. Set paused system state to false
+                // 2. set run cycle to true (Resume current run )
+                // 3. Enable the current zone. 
+                systemPaused = false;
+                runCycleEnabled = true;
+                enableZone(zones[currentZone]);
+            }
+
+
+        } else if (strncmp_P(buf, PSTR("S:+"),3) == 0 ) {
+            // Send system status
+            send_status();
+        } else {
+            // unknown command 
+            // reject message, clear rx buffer, return error code
+            Serial.print("UnExpected Data : ");
+            Serial.println(buf);
+            wifly.flushRx();
+            Serial.println("Sending error response.");
+            wifly.write("E:01"); // send error status 01. Command note found...
+        }
+        TXf = millis();
+        Serial.print("Status transmit time = ");
+        Serial.println(TXf - TXi );
     }
-    delay(delay_time);
-*/
-}
+
+} //END Main LOOP
 
 void safeSystemStop() {
     // Stop all zones
@@ -225,9 +296,7 @@ void disableZone(int Zone) {
 
 void testNetwork() {
     // perform additional network connectivity tests.
-
 	// Attempt to ping the outside world
-
 	Serial.print("ping google.com... ");
 	if (wifly.ping("google.com")) {
 		Serial.println( " Ok " );	
@@ -240,7 +309,6 @@ void testNetwork() {
 	} else {
 		Serial.println(" Failed to ping network host");
 	}
-
 }
 
 
@@ -257,6 +325,36 @@ void terminal() {
 			wifly.write(Serial.read());
 		}
 	}
+}
+
+void getControllerInfo() {
+    // Print wifly controller data...
+    Serial.print("MAC: ");
+    Serial.println(wifly.getMAC(buf, sizeof(buf)));
+    Serial.print("IP: ");
+    Serial.println(wifly.getIP(buf, sizeof(buf)));
+    Serial.print("Netmask: ");
+    Serial.println(wifly.getNetmask(buf, sizeof(buf)));
+    Serial.print("Gateway: ");
+    Serial.println(wifly.getGateway(buf, sizeof(buf)));
+}
+
+
+void send_status(){
+
+    wifly.write("{\"SYSTEM_STATUS\":");
+    
+    if (runCycleEnabled) {
+         wifly.write("\"ACTIVE\",");
+    } else {
+         wifly.write("\"IDLE\",");
+    }
+    
+    wifly.write("}");
+    /*
+    wifly.write(F("{\"SYSTEM_STATUS\":"));
+    wifly.write(F("{\"SYSTEM_STATUS\":"));
+    */
 
 }
 
