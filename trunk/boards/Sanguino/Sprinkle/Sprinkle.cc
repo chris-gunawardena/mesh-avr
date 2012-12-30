@@ -234,6 +234,7 @@ void loop() {
                 runCycleEnabled = false;
                 cycleStarted = false;
                 currentRunIteration = 0;
+                currentZone = 0;
                 systemPaused = false;
             } else if (strncmp_P(buf, PSTR("F:pCycle"),8) == 0 ) {
                 // [Pause] Current cycle
@@ -251,6 +252,9 @@ void loop() {
                 systemPaused = false;
                 runCycleEnabled = true;
                 enableZone(zones[currentZone]);
+            } else {
+            
+                wifly.write("E:02"); // send error status 01. Command note found...
             }
 
 
