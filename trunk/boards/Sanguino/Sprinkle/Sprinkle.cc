@@ -14,6 +14,9 @@
  *  
  * Weather Listings (REST)
  * http://graphical.weather.gov/xml/rest.php
+ * Notes:
+ * 1. http://arduino.cc/forum/index.php/topic,39873.0.html
+ * 2. http://stackoverflow.com/questions/3270967/how-to-send-float-over-serial
  */
 
 // Include PROGMEM library (Access Flash Memory instead of SRAM...)
@@ -53,6 +56,8 @@ void println_P(); // print static content from flash (include newline)
 void terminal();
 void getControllerInfo();
 void send_status();
+char * int2str( unsigned long num );
+char * float2str ( float num );
 /*
  * BEGIN CODE
  */
@@ -150,6 +155,8 @@ int zoneRunTimeMax = 1200; // set to 1:00 minutes for testing 18000; // set max 
 int currentRunIteration = 0;
 int currentZone = 0; // store current zone of cycle, initialize to 0
 int maxZone = 10; // account for 10 total zones 0-9
+int cyclePrcInt;
+float cyclePrcFloat;
 char buf[80]; // create character buffer for network messages
 long TXi, TXf;
 void loop() {
@@ -351,9 +358,48 @@ void send_status(){
     if (runCycleEnabled) {
          wifly.write("\"ACTIVE\",");
     } else {
-         wifly.write("\"IDLE\",");
+        if (systemPaused) {
+            // System is paused
+            wifly.write("\"PAUSED\",");
+        } else {
+            wifly.write("\"IDLE\",");
+        }
     }
     
+    wifly.write("\"CURRENT_ZONE\":");
+
+    wifly.write("\"");
+
+    
+
+    wifly.write(int2str(currentZone));
+
+    wifly.write("\",");
+    wifly.write("\"ZONE_CYCLE_PERCENT\":");
+
+    wifly.write("\"");
+    //cyclePrc = ((int)((float)currentRunIteration / zoneRunTimeMax)* 100);
+    // Calculate the remaining run time for a zone.
+    // Note(s): 
+    // 1.) Floating point calculations require a minimum of one value in the calculation
+    // to be a floating point type. In this case currentRunIteration is cast into a float
+    // to accomidate this requirement. 
+    // 2.) Floating point to string conversions are not fully implemented at this time via
+    // the standard avr libraries (see float2str for more information). As a work-around 
+    // floating point values are cast to integer prior to sting conversion...
+    cyclePrcFloat = ((float)currentRunIteration / zoneRunTimeMax) * 100;
+    cyclePrcInt = (int)cyclePrcFloat;
+    Serial.println(currentRunIteration); 
+
+
+    Serial.println(zoneRunTimeMax); 
+    Serial.print("Percent complete: ");
+    Serial.println(cyclePrcInt); 
+
+    wifly.write(int2str(cyclePrcInt));
+
+    wifly.write("\%\",");
+
     wifly.write("}");
     /*
     wifly.write(F("{\"SYSTEM_STATUS\":"));
@@ -362,4 +408,18 @@ void send_status(){
 
 }
 
+char * int2str( unsigned long num ) {
+    // convert integer values into strings
+    static char retnum[21];
+    sprintf( retnum, "%u", num);
+    return retnum;
+}
 
+char * float2str ( float num ) {
+    // Note: vprintf function is not completely implemented for floats in avr standard library
+    // additional complile time linking required to implement full version of vprintf
+    // this function will remain in the code base, however, will not be implemented
+    static char retnum[21];
+    sprintf( retnum, "%4.2f", num);
+    return retnum;
+}

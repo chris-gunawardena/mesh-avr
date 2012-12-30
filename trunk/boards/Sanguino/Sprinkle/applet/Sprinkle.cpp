@@ -17,6 +17,9 @@ void loop();
  *  
  * Weather Listings (REST)
  * http://graphical.weather.gov/xml/rest.php
+ * Notes:
+ * 1. http://arduino.cc/forum/index.php/topic,39873.0.html
+ * 2. http://stackoverflow.com/questions/3270967/how-to-send-float-over-serial
  */
 
 // Include PROGMEM library (Access Flash Memory instead of SRAM...)
@@ -56,6 +59,8 @@ void println_P(); // print static content from flash (include newline)
 void terminal();
 void getControllerInfo();
 void send_status();
+char * int2str( unsigned long num );
+char * float2str ( float num );
 /*
  * BEGIN CODE
  */
@@ -153,6 +158,8 @@ int zoneRunTimeMax = 1200; // set to 1:00 minutes for testing 18000; // set max 
 int currentRunIteration = 0;
 int currentZone = 0; // store current zone of cycle, initialize to 0
 int maxZone = 10; // account for 10 total zones 0-9
+int cyclePrcInt;
+float cyclePrcFloat;
 char buf[80]; // create character buffer for network messages
 long TXi, TXf;
 void loop() {
@@ -237,6 +244,7 @@ void loop() {
                 runCycleEnabled = false;
                 cycleStarted = false;
                 currentRunIteration = 0;
+                currentZone = 0;
                 systemPaused = false;
             } else if (strncmp_P(buf, PSTR("F:pCycle"),8) == 0 ) {
                 // [Pause] Current cycle
@@ -254,6 +262,9 @@ void loop() {
                 systemPaused = false;
                 runCycleEnabled = true;
                 enableZone(zones[currentZone]);
+            } else {
+            
+                wifly.write("E:02"); // send error status 01. Command note found...
             }
 
 
@@ -350,9 +361,40 @@ void send_status(){
     if (runCycleEnabled) {
          wifly.write("\"ACTIVE\",");
     } else {
-         wifly.write("\"IDLE\",");
+        if (systemPaused) {
+            // System is paused
+            wifly.write("\"PAUSED\",");
+        } else {
+            wifly.write("\"IDLE\",");
+        }
     }
     
+    wifly.write("\"CURRENT_ZONE\":");
+
+    wifly.write("\"");
+
+    
+
+    wifly.write(int2str(currentZone));
+
+    wifly.write("\",");
+    wifly.write("\"ZONE_CYCLE_PERCENT\":");
+
+    wifly.write("\"");
+    //cyclePrc = ((int)((float)currentRunIteration / zoneRunTimeMax)* 100);
+    cyclePrcFloat = ((float)currentRunIteration / zoneRunTimeMax) * 100;
+    cyclePrcInt = (int)cyclePrcFloat;
+    Serial.println(currentRunIteration); 
+
+
+    Serial.println(zoneRunTimeMax); 
+    Serial.print("Percent complete: ");
+    Serial.println(cyclePrcInt); 
+
+    wifly.write(int2str(cyclePrcInt));
+
+    wifly.write("\%\",");
+
     wifly.write("}");
     /*
     wifly.write(F("{\"SYSTEM_STATUS\":"));
@@ -361,4 +403,14 @@ void send_status(){
 
 }
 
+char * int2str( unsigned long num ) {
+    static char retnum[21];
+    sprintf( retnum, "%u", num);
+    return retnum;
+}
 
+char * float2str ( float num ) {
+    static char retnum[21];
+    sprintf( retnum, "%4.2f", num);
+    return retnum;
+}
