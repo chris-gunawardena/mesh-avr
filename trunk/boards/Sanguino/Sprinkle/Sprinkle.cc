@@ -211,12 +211,12 @@ void loop() {
         Serial.println(mbuf);
         
 
-        if (strncmp_P(mbuf, PSTR("F:"),2) == 0 ) {
+        if (strncmp_P(mbuf, PSTR("C:"),2) == 0 ) {
             // Received a function command
             Serial.println("Accepted function command ");
             wifly.write("ACCEPT");
             
-            if (strncmp_P(mbuf, PSTR("F:eCycle"),8) == 0 ) {
+            if (strncmp_P(mbuf, PSTR("C:e"),8) == 0 ) {
                 // [Enable] Start run cycle
                 // 1. Start cycle
                 if (! systemPaused ) {
@@ -226,7 +226,7 @@ void loop() {
                 }
 
                 
-            } else if (strncmp_P(mbuf, PSTR("F:dCycle"),8) == 0 ) {
+            } else if (strncmp_P(mbuf, PSTR("C:d"),8) == 0 ) {
                 // [Disable] Stop run cycle
                 // 1. Disable all zones
                 // 2. Set run cycle to false
@@ -239,7 +239,7 @@ void loop() {
                 currentRunIteration = 0;
                 currentZone = 0;
                 systemPaused = false;
-            } else if (strncmp_P(mbuf, PSTR("F:pCycle"),8) == 0 ) {
+            } else if (strncmp_P(mbuf, PSTR("C:p"),8) == 0 ) {
                 // [Pause] Current cycle
                 // 1. Disable all zones
                 // 2. set the run cycle to false (prevent the cycle counter from incrementing)
@@ -247,7 +247,7 @@ void loop() {
                 runCycleEnabled = false;
                 safeSystemStop();
                 systemPaused = true;
-            } else if (strncmp_P(mbuf, PSTR("F:rCycle"),8) == 0 ) {
+            } else if (strncmp_P(mbuf, PSTR("C:r"),8) == 0 ) {
                 // [Resume] Current cycle
                 // 1. Set paused system state to false
                 // 2. set run cycle to true (Resume current run )
@@ -261,7 +261,7 @@ void loop() {
             }
 
 
-        } else if (strncmp_P(mbuf, PSTR("S:+"),3) == 0 ) {
+        } else if (strncmp_P(mbuf, PSTR("S:s"),3) == 0 ) {
             // Send system status
             send_status();
         } else {
@@ -297,56 +297,6 @@ void disableZone(int Zone) {
     digitalWrite(Zone, LOW);
 }
 
-
-
-
-
-/*
-void testNetwork() {
-    // perform additional network connectivity tests.
-	// Attempt to ping the outside world
-	Serial.print("ping google.com... ");
-	if (wifly.ping("google.com")) {
-		Serial.println( " Ok " );	
-	} else {
-		Serial.println(" Failed to ping Google");
-	}
-	Serial.print("ping network host... ");
-	if (wifly.ping("10.42.8.35")) {
-		Serial.println( " Ok " );	
-	} else {
-		Serial.println(" Failed to ping network host");
-	}
-}
-
-
-void terminal() {
-	Serial.println("Terminal ready");
-	while(1) {
-		if(wifly.available() > 0 ) {
-			// write wifi to serial 
-			Serial.write(wifly.read());
-		} 
-		if (Serial.available()) {
-			// Write serial to wifi
-			wifly.write(Serial.read());
-		}
-	}
-}
-
-
-void getControllerInfo() {
-    // Print wifly controller data...
-    Serial.print("MAC: ");
-    Serial.println(wifly.getMAC(buf, sizeof(buf)));
-    Serial.print("IP: ");
-    Serial.println(wifly.getIP(buf, sizeof(buf)));
-    Serial.print("Netmask: ");
-    Serial.println(wifly.getNetmask(buf, sizeof(buf)));
-    Serial.print("Gateway: ");
-    Serial.println(wifly.getGateway(buf, sizeof(buf)));
-}
-*/
 
 void send_status(){
 
