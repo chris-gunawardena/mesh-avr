@@ -47,7 +47,18 @@ Map IO Port to Sprinkler Manifold Solnoids
 // define 10 sprinkling zones. Zone map to be determined by wiring....
 // Note Relays 0 & 15 not connected at this time.
 int zones[] = {5,1,2,3,4,20,19,18,17,16};
-unsigned long time; // added timer for testing runtimes...
+bool runCycleEnabled = false; // used to toggle between run, stop, pause, and resume. Latter features are not complete, yet. 
+bool systemPaused = false;
+bool cycleStarted = false; // hold state of system. Note: system state could be maintained via single byte (bit map)
+int scan_time = 50; // set Scan time to 50 ms (scan_time * 20 = 1 second)
+int zoneRunTimeMax = 1200; // set to 1:00 minutes for testing 18000; // set max runtime per zone to 15 minutes
+int currentRunIteration = 0;
+int currentZone = 0; // store current zone of cycle, initialize to 0
+int maxZone = 10; // account for 10 total zones 0-9
+int cyclePrcInt;
+float cyclePrcFloat;
+char mbuf[80]; // create character buffer for network messages
+long TXi, TXf;
 /*
  * Function declaration
  */
@@ -56,8 +67,8 @@ void enableZone(int Zone);
 void disableZone(int Zone);
 void print_P(); // Print static content from flash
 void println_P(); // print static content from flash (include newline)
-void terminal();
-void getControllerInfo();
+//void terminal();
+//void getControllerInfo();
 void send_status();
 char * int2str( unsigned long num );
 char * float2str ( float num );
@@ -65,8 +76,7 @@ char * float2str ( float num );
  * BEGIN CODE
  */
 void setup() {
-	char buf[32]; // 32 byte buffer
-
+    char buf[32];
     // set all the zone pins to outputs...
     for ( int x =0; x < sizeof(zones); x++) {
 	    // Set Relay Pins to Outputs
@@ -85,8 +95,8 @@ void setup() {
 	
 	if (!wifly.begin(&Serial1, NULL)) {
 		// Check to see if the libraries are loaded...
-		Serial.println("Failed to start wifly controller\n\rPlease check configuration and try again...");
-		terminal();
+		Serial.println(F("Failed to start wifly controller\n\rPlease check configuration and try again..."));
+	//	terminal();
 	}
 
 	if (wifly.getFlushTimeout() != 10) {
@@ -148,20 +158,6 @@ void setup() {
 
 }
 
-uint32_t lastSend = 0;
-uint32_t count=0;
-bool runCycleEnabled = false; // used to toggle between run, stop, pause, and resume. Latter features are not complete, yet. 
-bool systemPaused = false;
-bool cycleStarted = false; // hold state of system. Note: system state could be maintained via single byte (bit map)
-int scan_time = 50; // set Scan time to 50 ms (scan_time * 20 = 1 second)
-int zoneRunTimeMax = 1200; // set to 1:00 minutes for testing 18000; // set max runtime per zone to 15 minutes
-int currentRunIteration = 0;
-int currentZone = 0; // store current zone of cycle, initialize to 0
-int maxZone = 10; // account for 10 total zones 0-9
-int cyclePrcInt;
-float cyclePrcFloat;
-char buf[80]; // create character buffer for network messages
-long TXi, TXf;
 void loop() {
 
     delay(scan_time); // delay run for short time < 100 ms
@@ -212,18 +208,18 @@ void loop() {
         Serial.println("WiFi Data Available");
         
         //if (wifly.gets(buf, sizeof(buf))){
-        wifly.gets(buf, sizeof(buf));
+        wifly.gets(mbuf, sizeof(mbuf));
         // Read from raw socket
         Serial.print("Buffer has: ");
-        Serial.println(buf);
+        Serial.println(mbuf);
         
 
-        if (strncmp_P(buf, PSTR("F:"),2) == 0 ) {
+        if (strncmp_P(mbuf, PSTR("F:"),2) == 0 ) {
             // Received a function command
             Serial.println("Accepted function command ");
             wifly.write("ACCEPT");
             
-            if (strncmp_P(buf, PSTR("F:eCycle"),8) == 0 ) {
+            if (strncmp_P(mbuf, PSTR("F:eCycle"),8) == 0 ) {
                 // [Enable] Start run cycle
                 // 1. Start cycle
                 if (! systemPaused ) {
@@ -233,7 +229,7 @@ void loop() {
                 }
 
                 
-            } else if (strncmp_P(buf, PSTR("F:dCycle"),8) == 0 ) {
+            } else if (strncmp_P(mbuf, PSTR("F:dCycle"),8) == 0 ) {
                 // [Disable] Stop run cycle
                 // 1. Disable all zones
                 // 2. Set run cycle to false
@@ -246,7 +242,7 @@ void loop() {
                 currentRunIteration = 0;
                 currentZone = 0;
                 systemPaused = false;
-            } else if (strncmp_P(buf, PSTR("F:pCycle"),8) == 0 ) {
+            } else if (strncmp_P(mbuf, PSTR("F:pCycle"),8) == 0 ) {
                 // [Pause] Current cycle
                 // 1. Disable all zones
                 // 2. set the run cycle to false (prevent the cycle counter from incrementing)
@@ -254,7 +250,7 @@ void loop() {
                 runCycleEnabled = false;
                 safeSystemStop();
                 systemPaused = true;
-            } else if (strncmp_P(buf, PSTR("F:rCycle"),8) == 0 ) {
+            } else if (strncmp_P(mbuf, PSTR("F:rCycle"),8) == 0 ) {
                 // [Resume] Current cycle
                 // 1. Set paused system state to false
                 // 2. set run cycle to true (Resume current run )
@@ -268,14 +264,14 @@ void loop() {
             }
 
 
-        } else if (strncmp_P(buf, PSTR("S:+"),3) == 0 ) {
+        } else if (strncmp_P(mbuf, PSTR("S:+"),3) == 0 ) {
             // Send system status
             send_status();
         } else {
             // unknown command 
             // reject message, clear rx buffer, return error code
             Serial.print("UnExpected Data : ");
-            Serial.println(buf);
+            Serial.println(mbuf);
             wifly.flushRx();
             Serial.println("Sending error response.");
             wifly.write("E:01"); // send error status 01. Command note found...
@@ -308,6 +304,7 @@ void disableZone(int Zone) {
 
 
 
+/*
 void testNetwork() {
     // perform additional network connectivity tests.
 	// Attempt to ping the outside world
@@ -326,7 +323,6 @@ void testNetwork() {
 }
 
 
-
 void terminal() {
 	Serial.println("Terminal ready");
 	while(1) {
@@ -341,6 +337,7 @@ void terminal() {
 	}
 }
 
+
 void getControllerInfo() {
     // Print wifly controller data...
     Serial.print("MAC: ");
@@ -352,11 +349,11 @@ void getControllerInfo() {
     Serial.print("Gateway: ");
     Serial.println(wifly.getGateway(buf, sizeof(buf)));
 }
-
+*/
 
 void send_status(){
 
-    wifly.write("{\"SYSTEM_STATUS\":");
+    wifly.write("{\"SYSTEM\":");
     
     if (runCycleEnabled) {
          wifly.write("\"ACTIVE\",");
@@ -369,19 +366,21 @@ void send_status(){
         }
     }
     
-    wifly.write("\"CURRENT_ZONE\":");
-
+    wifly.write("\"ZONE\":");
     wifly.write("\"");
-
-    
-
+    // Print the current zone
     wifly.write(int2str(currentZone));
-
     wifly.write("\",");
-    wifly.write("\"ZONE_CYCLE_PERCENT\":");
-
+    wifly.write("\"PERCENT\":");
     wifly.write("\"");
-    //cyclePrc = ((int)((float)currentRunIteration / zoneRunTimeMax)* 100);
+    // Calculate the remaining run time for a zone.
+    // Note(s): 
+    // 1.) Floating point calculations require a minimum of one value in the calculation
+    // to be a floating point type. In this case currentRunIteration is cast into a float
+    // to accomidate this requirement. 
+    // 2.) Floating point to string conversions are not fully implemented at this time via
+    // the standard avr libraries (see float2str for more information). As a work-around 
+    // floating point values are cast to integer prior to sting conversion...
     cyclePrcFloat = ((float)currentRunIteration / zoneRunTimeMax) * 100;
     cyclePrcInt = (int)cyclePrcFloat;
     Serial.println(currentRunIteration); 
@@ -404,12 +403,16 @@ void send_status(){
 }
 
 char * int2str( unsigned long num ) {
+    // convert integer values into strings
     static char retnum[21];
     sprintf( retnum, "%u", num);
     return retnum;
 }
 
 char * float2str ( float num ) {
+    // Note: vprintf function is not completely implemented for floats in avr standard library
+    // additional complile time linking required to implement full version of vprintf
+    // this function will remain in the code base, however, will not be implemented
     static char retnum[21];
     sprintf( retnum, "%4.2f", num);
     return retnum;
